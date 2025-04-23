@@ -49,7 +49,7 @@ export async function* ask_ai_stream(input: string): AsyncGenerator<string> {
     const content = chunk.content
     if (content) {
       fullResponse += content
-      yield content
+      yield String(content)
     }
   }
 
