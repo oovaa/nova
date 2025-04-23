@@ -1,6 +1,7 @@
 import { ChatCohere } from '@langchain/cohere'
 import { PromptTemplate } from '@langchain/core/prompts'
 import { StringOutputParser } from '@langchain/core/output_parsers'
+import { RunnableSequence } from '@langchain/core/runnables'
 
 const llm = new ChatCohere({
   apiKey: 'TmLMdVCDm0JIR0jE9XgmxTQtg6rr0xfsrMSUxlaU',
@@ -21,7 +22,9 @@ Nova:`
 const prompt = PromptTemplate.fromTemplate(template)
 let chat_history = '' // Initialize as empty string
 
+// Create both regular and streaming chains
 const chain = prompt.pipe(llm).pipe(new StringOutputParser())
+const streamingChain = RunnableSequence.from([prompt, llm])
 
 export async function ask_ai(input: string): Promise<string> {
   const res = await chain.invoke({
@@ -35,8 +38,21 @@ export async function ask_ai(input: string): Promise<string> {
   return res
 }
 
-// Example usage
-// (async () => {
-//   const response = await ask_ai('Hello!');
-//   console.log(response);
-// })();
+export async function* ask_ai_stream(input: string): AsyncGenerator<string> {
+  const stream = await streamingChain.stream({
+    input,
+    chat_history,
+  })
+
+  let fullResponse = ''
+  for await (const chunk of stream) {
+    const content = chunk.content
+    if (content) {
+      fullResponse += content
+      yield content
+    }
+  }
+
+  // Update chat history with the full response
+  chat_history += `Human: ${input}\nAI: ${fullResponse}\n`
+}

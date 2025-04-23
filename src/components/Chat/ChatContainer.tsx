@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import ChatMessage, { ChatMessageProps } from './ChatMessage'
 import ChatInput from './ChatInput'
 import DarkModeToggle from './DarkModeToggle'
-import { ask_ai } from '../../lib/ai'
+import { ask_ai, ask_ai_stream } from '../../lib/ai'
 
 interface Message extends ChatMessageProps {
   id: string
@@ -19,6 +19,9 @@ const ChatContainer = () => {
   ])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
+    null
+  )
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -37,15 +40,32 @@ const ChatContainer = () => {
     setIsLoading(true)
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      const response = await ask_ai(content)
-      const botResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: `${response}`,
-        isUser: false,
+      // Create a temporary bot message that will be updated during streaming
+      const botMessageId = (Date.now() + 1).toString()
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: botMessageId,
+          content: '',
+          isUser: false,
+          isLoading: true,
+        },
+      ])
+      setStreamingMessageId(botMessageId)
+
+      // Process the stream
+      let fullResponse = ''
+      for await (const chunk of ask_ai_stream(content)) {
+        fullResponse += chunk
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMessageId
+              ? { ...msg, content: fullResponse, isLoading: false }
+              : msg
+          )
+        )
       }
 
-      setMessages((prev) => [...prev, botResponse])
       setError(null)
     } catch (err) {
       console.error('Failed to get bot response', err)
@@ -61,6 +81,7 @@ const ChatContainer = () => {
       ])
     } finally {
       setIsLoading(false)
+      setStreamingMessageId(null)
     }
   }
 
@@ -82,10 +103,6 @@ const ChatContainer = () => {
         {messages.map((message) => (
           <ChatMessage key={message.id} {...message} />
         ))}
-
-        {isLoading && (
-          <ChatMessage content='' isUser={false} isLoading={true} />
-        )}
       </div>
 
       <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
