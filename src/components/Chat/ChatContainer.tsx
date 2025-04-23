@@ -67,7 +67,7 @@ const ChatContainer = () => {
   return (
     <div className='flex flex-col h-screen bg-background dark:bg-background/90 text-foreground dark:text-foreground rounded-none shadow-none'>
       <div className='p-4 bg-secondary dark:bg-secondary/50 text-secondary-foreground text-center relative flex justify-center items-center'>
-        <h2 className='font-semibold flex-1 text-center'>Chat Assistant</h2>
+        <h2 className='font-semibold flex-1 text-center'>Nova</h2>
         <div className='absolute right-4 top-1/2 -translate-y-1/2'>
           <DarkModeToggle />
         </div>
