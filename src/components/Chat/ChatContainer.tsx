@@ -64,15 +64,15 @@ const ChatContainer = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="p-4 bg-primary text-white text-center">
+    <div className="flex flex-col h-screen bg-background dark:bg-background/90 text-foreground dark:text-foreground rounded-none shadow-none">
+      <div className="p-4 bg-secondary dark:bg-secondary/50 text-secondary-foreground text-center">
         <h2 className="font-semibold">Chat Assistant</h2>
       </div>
       
       {/* Message container */}
       <div 
         ref={containerRef}
-        className="flex-1 overflow-y-auto p-4 flex flex-col space-y-2"
+        className="flex-1 overflow-y-auto p-4 flex flex-col space-y-2 bg-background dark:bg-background/90"
       >
         {messages.map((message) => (
           <ChatMessage key={message.id} {...message} />

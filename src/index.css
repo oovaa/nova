@@ -131,15 +131,15 @@
 
 @layer components {
   .chat-message {
-    @apply p-4 rounded-2xl max-w-[80%] mb-4 animate-[slideIn_0.3s_ease-out];
+    @apply p-4 rounded-2xl max-w-[80%] mb-4 animate-[slideIn_0.3s_ease-out] transition-colors duration-300;
   }
   
   .chat-message-user {
-    @apply bg-chatbot-user text-gray-800 self-end rounded-tr-none;
+    @apply self-end rounded-tr-none;
   }
   
   .chat-message-bot {
-    @apply bg-chatbot-bot text-white self-start rounded-tl-none;
+    @apply self-start rounded-tl-none;
   }
 
   .typing-indicator {
@@ -147,7 +147,7 @@
   }
   
   .typing-indicator span {
-    @apply w-2 h-2 bg-white rounded-full animate-[pulse_1s_infinite_ease-in-out];
+    @apply w-2 h-2 rounded-full animate-[pulse_1s_infinite_ease-in-out];
   }
   
   .typing-indicator span:nth-child(2) {

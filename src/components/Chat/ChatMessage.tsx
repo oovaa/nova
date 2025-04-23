@@ -23,15 +23,17 @@ const ChatMessage = ({ content, isUser, isError, isLoading }: ChatMessageProps) 
       ref={messageRef}
       className={cn(
         "chat-message",
-        isUser ? "chat-message-user" : "chat-message-bot",
+        isUser 
+          ? "chat-message-user bg-secondary/20 dark:bg-secondary/30 text-foreground" 
+          : "chat-message-bot bg-primary/10 dark:bg-primary/20 text-foreground",
         isError && "bg-destructive text-destructive-foreground"
       )}
     >
       {isLoading ? (
         <div className="typing-indicator">
-          <span></span>
-          <span></span>
-          <span></span>
+          <span className="bg-foreground/50 dark:bg-foreground/70"></span>
+          <span className="bg-foreground/50 dark:bg-foreground/70"></span>
+          <span className="bg-foreground/50 dark:bg-foreground/70"></span>
         </div>
       ) : (
         <p className="break-words">{content}</p>
