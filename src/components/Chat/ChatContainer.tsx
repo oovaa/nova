@@ -65,7 +65,7 @@ const ChatContainer = () => {
   }
 
   return (
-    <div className='flex flex-col h-screen bg-background dark:bg-background/90 text-foreground dark:text-foreground rounded-none shadow-none'>
+    <div className='flex flex-col h-screen bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 dark:from-gray-800 dark:via-gray-900 dark:to-black text-foreground dark:text-foreground rounded-none shadow-none'>
       <div className='p-4 bg-secondary dark:bg-secondary/50 text-secondary-foreground text-center relative flex justify-center items-center'>
         <h2 className='font-semibold flex-1 text-center text-lg sm:text-xl md:text-2xl'>
           Nova
@@ -77,7 +77,7 @@ const ChatContainer = () => {
 
       <div
         ref={containerRef}
-        className='flex-1 overflow-y-auto p-4 flex flex-col space-y-2 bg-background dark:bg-background/90 sm:p-6 md:p-8'
+        className='flex-1 overflow-y-auto p-4 flex flex-col space-y-2 bg-white/70 dark:bg-gray-800/70 sm:p-6 md:p-8 rounded-lg shadow-lg'
       >
         {messages.map((message) => (
           <ChatMessage key={message.id} {...message} />
