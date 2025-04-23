@@ -2,7 +2,6 @@
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
 
 const DarkModeToggle = () => {
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -19,7 +18,7 @@ const DarkModeToggle = () => {
   return (
     <button
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
-      className="flex items-center gap-2 px-2 py-1 rounded-lg border border-transparent hover:shadow transition bg-muted/60 hover:bg-muted/80 dark:bg-background/90 dark:hover:bg-muted/30"
+      className="flex items-center gap-2 px-2 py-1 rounded-lg border border-transparent hover:shadow transition bg-muted/60 hover:bg-muted/80 dark:bg-background/90 dark:hover:bg-muted/30 active:scale-95"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       type="button"
       tabIndex={0}
