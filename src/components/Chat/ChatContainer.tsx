@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import ChatMessage, { ChatMessageProps } from './ChatMessage'
 import ChatInput from './ChatInput'
 import DarkModeToggle from './DarkModeToggle'
-import { ask_ai, ask_ai_stream } from '../../lib/ai'
+import { ask_ai, ask_ai_stream } from '../../lib/basic_chain'
 
 interface Message extends ChatMessageProps {
   id: string
