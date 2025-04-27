@@ -4,7 +4,7 @@ import { StringOutputParser } from '@langchain/core/output_parsers'
 import { RunnableSequence } from '@langchain/core/runnables'
 
 const llm = new ChatCohere({
-  apiKey: 'TmLMdVCDm0JIR0jE9XgmxTQtg6rr0xfsrMSUxlaU',
+  apiKey: import.meta.env.VITE_COHERE_API_KEY, // Updated to use VITE_COHERE_API_KEY
   model: 'command-r-plus',
   temperature: 0.4,
   maxRetries: 2,
