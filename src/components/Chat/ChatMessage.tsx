@@ -1,5 +1,7 @@
 import { cn } from '@/lib/utils'
 import { useEffect, useRef } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 export interface ChatMessageProps {
   content: string
@@ -40,7 +42,9 @@ const ChatMessage = ({
           <span className='bg-foreground/50 dark:bg-foreground/70'></span>
         </div>
       ) : (
-        <p className='break-words whitespace-pre-wrap'>{content}</p>
+        <div className='break-words whitespace-pre-wrap'>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        </div>
       )}
     </div>
   )
