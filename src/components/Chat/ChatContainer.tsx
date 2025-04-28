@@ -6,7 +6,9 @@ import DarkModeToggle from './DarkModeToggle'
 import { ask_ai_stream } from '../../lib/basic_chain'
 import { useDropzone } from 'react-dropzone'
 import { toast } from '@/components/ui/use-toast'
-import { Loader2 } from 'lucide-react'
+import { Loader2, FilePlus } from 'lucide-react' // Import FilePlus
+import { useIsMobile } from '@/hooks/use-mobile' // Corrected import
+import { Button } from '@/components/ui/button' // Import Button component
 // import { addDocumentToVectorStore } from '../../lib/rag'; // We'll create this next
 
 interface Message extends ChatMessageProps {
@@ -31,6 +33,7 @@ const ChatContainer = () => {
   const [isUploading, setIsUploading] = useState(false)
   const [isRagActive, setIsRagActive] = useState(false) // State for RAG indicator
   const containerRef = useRef<HTMLDivElement>(null)
+  const isMobileView = useIsMobile() // Corrected hook usage
 
   useEffect(() => {
     if (containerRef.current) {
@@ -128,7 +131,7 @@ const ChatContainer = () => {
     [handleDocumentUpload]
   )
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
@@ -137,7 +140,7 @@ const ChatContainer = () => {
         ['.docx'],
     },
     maxFiles: 1,
-    noClick: true, // Prevent opening file dialog on click, only drag/drop
+    noClick: true, // Set noClick to true for both desktop and mobile
     disabled: isUploading,
   })
 
@@ -179,7 +182,23 @@ const ChatContainer = () => {
           )}
           <h2 className='font-semibold text-lg sm:text-xl md:text-2xl'>Nova</h2>
         </div>
-        <div className='absolute right-4 top-1/2 -translate-y-1/2'>
+        {/* Container for header buttons */}
+        <div className='absolute right-4 top-1/2 -translate-y-1/2 flex items-center space-x-2'>
+          {/* Conditionally render upload button on mobile */}
+          {isMobileView && (
+            <Button
+              variant='ghost'
+              size='icon'
+              onClick={(e) => {
+                e.stopPropagation() // Prevent triggering dropzone's root onClick
+                open() // Open file dialog
+              }}
+              disabled={isUploading}
+              aria-label='Upload Document'
+            >
+              <FilePlus className='h-5 w-5' />
+            </Button>
+          )}
           <DarkModeToggle />
         </div>
       </div>
