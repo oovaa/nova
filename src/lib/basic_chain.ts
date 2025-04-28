@@ -1,17 +1,17 @@
+// src/lib/basic_chain.ts
 import { ChatCohere } from '@langchain/cohere'
 import { PromptTemplate } from '@langchain/core/prompts'
 import { StringOutputParser } from '@langchain/core/output_parsers'
 import { RunnableSequence } from '@langchain/core/runnables'
 
 export const llm = new ChatCohere({
-  apiKey: import.meta.env.VITE_COHERE_API_KEY, // Updated to use VITE_COHERE_API_KEY
+  apiKey: import.meta.env.VITE_COHERE_API_KEY,
   model: 'command-r-plus',
   temperature: 0.4,
   maxRetries: 2,
 })
 
-const template = `You are Nova, a friendly assistant. answer the user message be very friendly and don't say that you are an AI 
-make good use of the chat history, and just be cool 
+const template = `You are Nova, a friendly assistant. Answer the user message in a friendly way. Use the chat history for context.
 
 Current conversation:
 {chat_history}
@@ -20,9 +20,8 @@ User: {input}
 Nova:`
 
 const prompt = PromptTemplate.fromTemplate(template)
-let chat_history = '' // Initialize as empty string
+let chat_history = ''
 
-// Create both regular and streaming chains
 const chain = prompt.pipe(llm).pipe(new StringOutputParser())
 const streamingChain = RunnableSequence.from([prompt, llm])
 
@@ -32,9 +31,7 @@ export async function ask_ai(input: string): Promise<string> {
     chat_history,
   })
 
-  // Update chat history with consistent formatting
-  chat_history += `Human: ${input}\nAI: ${res}\n`
-
+  chat_history += `User: ${input}\nNova: ${res}\n`
   return res
 }
 
@@ -53,6 +50,5 @@ export async function* ask_ai_stream(input: string): AsyncGenerator<string> {
     }
   }
 
-  // Update chat history with the full response
-  chat_history += `Human: ${input}\nAI: ${fullResponse}\n`
+  chat_history += `User: ${input}\nNova: ${fullResponse}\n`
 }
