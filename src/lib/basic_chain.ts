@@ -3,7 +3,7 @@ import { PromptTemplate } from '@langchain/core/prompts'
 import { StringOutputParser } from '@langchain/core/output_parsers'
 import { RunnableSequence } from '@langchain/core/runnables'
 
-const llm = new ChatCohere({
+export const llm = new ChatCohere({
   apiKey: import.meta.env.VITE_COHERE_API_KEY, // Updated to use VITE_COHERE_API_KEY
   model: 'command-r-plus',
   temperature: 0.4,
