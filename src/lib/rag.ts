@@ -9,14 +9,19 @@ import {
 import { PromptTemplate } from '@langchain/core/prompts'
 import { llm } from './basic_chain'
 import { StringOutputParser } from '@langchain/core/output_parsers'
+import dotenv from 'dotenv'
+
+dotenv.config() // Load environment variables from .env file
 
 let vectorstore: MemoryVectorStore | undefined
 let retriever: any | undefined
 
-export const processDocuments = async (file_path: File) => {
-  console.log(await file_path.text())
+// Modify to accept file path string
+export const processDocuments = async (filePath: string) => {
+  console.log(`Processing document at path: ${filePath}`)
 
-  const loaded = await parser(file_path)
+  // Pass the file path directly to the parser
+  const loaded = await parser(filePath)
 
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: 500, // Adjust chunk size as needed
@@ -30,6 +35,7 @@ export const processDocuments = async (file_path: File) => {
     vectorstore = await MemoryVectorStore.fromDocuments(
       docs,
       new CohereEmbeddings({
+        apiKey: process.env.VITE_COHERE_API_KEY, // Use process.env
         model: 'embed-v4.0',
       })
     )
@@ -74,6 +80,8 @@ const prompt = PromptTemplate.fromTemplate(template)
 
 // Modify the chain to accept history dynamically
 const chain = RunnableSequence.from([
+  (prev): ()=> console.log(prev),
+  
   {
     context: retrieve_chain,
     question: (input: { question: string; history?: string }) => input.question,
@@ -90,3 +98,29 @@ export const askQuestion = (question: string, history: string) => {
   // Return the stream iterator from the chain, passing the history
   return chain.stream({ question, history })
 }
+
+// Example usage of askQuestion in a main function
+const main = async () => {
+  const question = 'What is the capital of France?'
+  const history = 'User previously asked about European countries.'
+
+  console.log('Asking question with history...')
+  for await (const response of askQuestion(question, history)) {
+    process.stdout.write(response)
+  }
+
+  console.log('\n')
+
+  const newQuestion = 'What is the population of Paris?'
+  const newHistory =
+    history +
+    '\n' +
+    `User: ${question}\nAssistant: Paris is the capital of France.`
+
+  console.log('Asking another question with updated history...')
+  for await (const response of askQuestion(newQuestion, newHistory)) {
+    process.stdout.write(response)
+  }
+}
+
+main().catch((err) => console.error(err))

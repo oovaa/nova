@@ -3,9 +3,12 @@ import { ChatCohere } from '@langchain/cohere'
 import { PromptTemplate } from '@langchain/core/prompts'
 import { StringOutputParser } from '@langchain/core/output_parsers'
 import { RunnableSequence } from '@langchain/core/runnables'
+import dotenv from 'dotenv'
+
+dotenv.config() // Load environment variables from .env file
 
 export const llm = new ChatCohere({
-  apiKey: import.meta.env.VITE_COHERE_API_KEY,
+  apiKey: process.env.VITE_COHERE_API_KEY, // Use process.env
   model: 'command-r-plus',
   temperature: 0.4,
   maxRetries: 2,
