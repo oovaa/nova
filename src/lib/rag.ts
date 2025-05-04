@@ -132,37 +132,39 @@ export const askQuestion = async (question: string, history: string) => {
   return chain.stream({ question, history })
 }
 
-const main = async () => {
-  const question1 = 'What is the capital of France?'
-  const history1 = 'User previously asked about European countries.'
+// const main = async () => {
+//   const question1 = 'tell me about the document'
+//   const history1 = 'User previously asked about European countries.'
 
-  try {
-    await processDocuments('brooch.pdf')
+//   try {
+//     await processDocuments('brooch.pdf')
 
-    const stream1 = await askQuestion(question1, history1)
-    process.stdout.write('Assistant: ')
-    for await (const chunk of stream1) {
-      process.stdout.write(chunk)
-    }
+//     const stream1 = await askQuestion(question1, history1)
+//     process.stdout.write('Assistant: ')
+//     for await (const chunk of stream1) {
+//       process.stdout.write(chunk)
+//     }
 
-    const question2 = 'What is the population of Paris?'
-    const history2 =
-      history1 +
-      `\nUser: ${question1}\nAssistant: ${'Paris is the capital of France.'}`
+//     const question2 = 'What is the population of Paris?'
+//     const history2 =
+//       history1 +
+//       `\nUser: ${question1}\nAssistant: ${'Paris is the capital of France.'}`
 
-    const stream2 = await askQuestion(question2, history2)
-    process.stdout.write('Assistant: ')
-    for await (const chunk of stream2) {
-      process.stdout.write(chunk)
-    }
-  } catch (err) {
-    if (err.response && err.response.data) {
-      console.error('Error Details from API Response:', err.response.data)
-    }
-    if (err.errors) {
-      console.error('Validation Errors:', err.errors)
-    }
-  }
-}
+//     const stream2 = await askQuestion(question2, history2)
+//     console.log('\n\n')
 
-main().catch((err) => console.error('Unhandled error in main:', err))
+//     process.stdout.write('Assistant: ')
+//     for await (const chunk of stream2) {
+//       process.stdout.write(chunk)
+//     }
+//   } catch (err) {
+//     if (err.response && err.response.data) {
+//       console.error('Error Details from API Response:', err.response.data)
+//     }
+//     if (err.errors) {
+//       console.error('Validation Errors:', err.errors)
+//     }
+//   }
+// }
+
+// main().catch((err) => console.error('Unhandled error in main:', err))

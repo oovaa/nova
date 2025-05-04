@@ -38,20 +38,14 @@ export async function ask_ai(input: string): Promise<string> {
   return res
 }
 
-export async function* ask_ai_stream(input: string): AsyncGenerator<string> {
+export async function* ask_ai_stream(
+  input: string,
+  chat_history: string
+): AsyncGenerator<string> {
   const stream = await streamingChain.stream({
     input,
     chat_history,
   })
 
-  let fullResponse = ''
-  for await (const chunk of stream) {
-    const content = chunk.content
-    if (content) {
-      fullResponse += content
-      yield String(content)
-    }
-  }
-
-  chat_history += `User: ${input}\nNova: ${fullResponse}\n`
+  return stream
 }
