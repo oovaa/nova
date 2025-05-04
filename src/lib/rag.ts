@@ -11,53 +11,88 @@ import { llm } from './basic_chain'
 import { StringOutputParser } from '@langchain/core/output_parsers'
 import dotenv from 'dotenv'
 
-dotenv.config() // Load environment variables from .env file
+dotenv.config()
 
 let vectorstore: MemoryVectorStore | undefined
 let retriever: any | undefined
 
-// Modify to accept file path string
 export const processDocuments = async (filePath: string) => {
-  console.log(`Processing document at path: ${filePath}`)
-
-  // Pass the file path directly to the parser
   const loaded = await parser(filePath)
 
+  let textContent: string | string[]
+  if (
+    Array.isArray(loaded) &&
+    loaded.length > 0 &&
+    typeof loaded[0] === 'object' &&
+    loaded[0] !== null &&
+    'content' in loaded[0]
+  ) {
+    textContent = loaded.map((item) => item.content)
+  } else if (
+    typeof loaded === 'string' ||
+    (Array.isArray(loaded) && loaded.every((item) => typeof item === 'string'))
+  ) {
+    textContent = loaded
+  } else {
+    textContent = loaded
+  }
+
   const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 500, // Adjust chunk size as needed
-    chunkOverlap: 0, // Adjust overlap as needed
+    chunkSize: 500,
+    chunkOverlap: 0,
   })
 
-  const docs = await splitter.createDocuments(loaded)
+  const docs = await splitter.createDocuments(textContent)
 
   if (!vectorstore) {
-    // Initialize vector store with embeddings
-    vectorstore = await MemoryVectorStore.fromDocuments(
-      docs,
-      new CohereEmbeddings({
-        apiKey: process.env.VITE_COHERE_API_KEY, // Use process.env
-        model: 'embed-v4.0',
-      })
-    )
-
-    // Create a retriever from the vector store
-    retriever = vectorstore.asRetriever()
-
-    console.log('Documents stored and retriever initialized.')
+    try {
+      vectorstore = await MemoryVectorStore.fromDocuments(
+        docs,
+        new CohereEmbeddings({
+          apiKey: process.env.VITE_COHERE_API_KEY,
+          model: 'embed-v4.0',
+        })
+      )
+      retriever = vectorstore.asRetriever()
+    } catch (embeddingError) {
+      throw embeddingError
+    }
   } else {
-    // Add new documents to the existing vector store
-    await vectorstore.addDocuments(docs)
-    console.log('New documents added to the vector store.')
+    try {
+      await vectorstore.addDocuments(docs)
+    } catch (addDocError) {
+      throw addDocError
+    }
   }
 }
 
-const retrieve_chain = RunnableSequence.from([
-  async (input: { question: string }) => {
-    return await retriever.invoke(input.question)
-  },
-  // (prevResult) => console.log(prevResult),
+export function combine(docs) {
+  if (
+    !Array.isArray(docs) ||
+    !docs.every(
+      (doc) =>
+        typeof doc === 'object' &&
+        doc !== null &&
+        'pageContent' in doc &&
+        typeof doc.pageContent === 'string'
+    )
+  ) {
+    return ''
+  }
+  return docs.map((doc) => doc.pageContent).join('\n\n')
+}
 
-  new RunnablePassthrough(), // Add a passthrough runnable as the third element
+const retrieve_chain = RunnableSequence.from([
+  async ({ question }) => {
+    if (!retriever) {
+      throw new Error(
+        'Retriever not initialized in retrieve_chain. Process documents first.'
+      )
+    }
+    return await retriever.invoke(question)
+  },
+  combine,
+  new RunnablePassthrough(),
 ])
 
 const template = `
@@ -78,49 +113,56 @@ Your Response:
 
 const prompt = PromptTemplate.fromTemplate(template)
 
-// Modify the chain to accept history dynamically
 const chain = RunnableSequence.from([
-  (prev): ()=> console.log(prev),
-  
   {
     context: retrieve_chain,
     question: (input: { question: string; history?: string }) => input.question,
     history: (input: { question: string; history?: string }) =>
-      input.history ?? '', // Use provided history or default to empty
+      input.history ?? '',
   },
   prompt,
   llm,
   new StringOutputParser(),
 ])
 
-// Modify askQuestion to accept history
-export const askQuestion = (question: string, history: string) => {
-  // Return the stream iterator from the chain, passing the history
+export const askQuestion = async (question: string, history: string) => {
+  if (!retriever) {
+    throw new Error('Retriever not initialized. Process documents first.')
+  }
   return chain.stream({ question, history })
 }
 
-// Example usage of askQuestion in a main function
 const main = async () => {
-  const question = 'What is the capital of France?'
-  const history = 'User previously asked about European countries.'
+  const question1 = 'What is the capital of France?'
+  const history1 = 'User previously asked about European countries.'
 
-  console.log('Asking question with history...')
-  for await (const response of askQuestion(question, history)) {
-    process.stdout.write(response)
-  }
+  try {
+    await processDocuments('brooch.pdf')
 
-  console.log('\n')
+    const stream1 = await askQuestion(question1, history1)
+    process.stdout.write('Assistant: ')
+    for await (const chunk of stream1) {
+      process.stdout.write(chunk)
+    }
 
-  const newQuestion = 'What is the population of Paris?'
-  const newHistory =
-    history +
-    '\n' +
-    `User: ${question}\nAssistant: Paris is the capital of France.`
+    const question2 = 'What is the population of Paris?'
+    const history2 =
+      history1 +
+      `\nUser: ${question1}\nAssistant: ${'Paris is the capital of France.'}`
 
-  console.log('Asking another question with updated history...')
-  for await (const response of askQuestion(newQuestion, newHistory)) {
-    process.stdout.write(response)
+    const stream2 = await askQuestion(question2, history2)
+    process.stdout.write('Assistant: ')
+    for await (const chunk of stream2) {
+      process.stdout.write(chunk)
+    }
+  } catch (err) {
+    if (err.response && err.response.data) {
+      console.error('Error Details from API Response:', err.response.data)
+    }
+    if (err.errors) {
+      console.error('Validation Errors:', err.errors)
+    }
   }
 }
 
-main().catch((err) => console.error(err))
+main().catch((err) => console.error('Unhandled error in main:', err))

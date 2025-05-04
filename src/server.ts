@@ -167,14 +167,15 @@ app.post('/rag', async (req: Request, res: Response, next: NextFunction) => {
     }
     res.end() // End the stream
   } catch (error) {
-    // Specific check if RAG isn't ready (example, adjust based on actual error)
+    // Specific check if RAG isn't ready
     if (
       error instanceof Error &&
-      error.message.includes('retriever is not initialized')
+      error.message.includes('Retriever not initialized') // Check for the specific error message
     ) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'RAG not ready. Please add documents first via /add-document.',
       })
+      return // Explicitly return void
     }
     next(error) // Pass other errors to the general handler
   }
@@ -231,7 +232,8 @@ app.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded.' })
+        res.status(400).json({ error: 'No file uploaded.' })
+        return // Explicitly return void
       }
 
       const filePath = req.file.path
@@ -246,7 +248,7 @@ app.post(
 
       res.json({
         message: 'Document processed successfully.',
-        filename: req.file.filename,
+        filename: req.file!.filename, // Use non-null assertion as we checked req.file
       })
     } catch (error) {
       // Clean up uploaded file on error if it exists
@@ -279,34 +281,37 @@ app.post(
  *         error: "Validation failed"
  *         details: [{ "path": ["input"], "message": "Input cannot be empty" }]
  */
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
   console.error('Error:', err) // Log the error
 
   if (err instanceof ZodError) {
     // Handle validation errors from Zod
-    return res.status(400).json({
+    res.status(400).json({
       error: 'Validation failed',
       details: err.errors.map((e) => ({ path: e.path, message: e.message })),
     })
+    return // Explicitly return void
   }
 
   if (err instanceof multer.MulterError) {
     // Handle file upload errors from Multer
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res
-        .status(400)
-        .json({ error: 'File too large. Max 10MB allowed.' })
+      res.status(400).json({ error: 'File too large. Max 10MB allowed.' })
+      return // Explicitly return void
     }
-    return res.status(400).json({ error: `File upload error: ${err.message}` })
+    res.status(400).json({ error: `File upload error: ${err.message}` })
+    return // Explicitly return void
   }
 
   if (err.message.includes('Invalid file type')) {
     // Handle custom file type error from multer filter
-    return res.status(400).json({ error: err.message })
+    res.status(400).json({ error: err.message })
+    return // Explicitly return void
   }
 
   // Handle generic errors
   res.status(500).json({ error: err.message || 'Internal Server Error' })
+  // No explicit return needed here as it's the end of the function
 })
 
 // --- Start Server ---
