@@ -8,6 +8,8 @@ import { config } from 'dotenv'
 config()
 
 const parser = async (filePath) => {
+  console.log(filePath)
+
   const ext = path.extname(filePath).toLowerCase()
   let loader
   let docs

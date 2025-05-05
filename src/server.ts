@@ -1,3 +1,4 @@
+import tempWrite from 'temp-write'
 import express, { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
 import multer from 'multer'
@@ -17,7 +18,7 @@ app.use(express.json()) // Parse JSON bodies
 // --- Zod Schemas for Validation ---
 
 const SimpleChatRequestSchema = z.object({
-  input: z.string().min(1, 'Input cannot be empty'),
+  question: z.string().min(1, 'Input cannot be empty'),
 })
 
 const RagChatRequestSchema = z.object({
@@ -27,26 +28,26 @@ const RagChatRequestSchema = z.object({
 
 // --- File Upload Setup (Multer) ---
 
-const storage = multer.memoryStorage() // Store files in memory
+const storage = multer.memoryStorage()
 
 const upload = multer({
-  storage: storage,
+  storage,
   fileFilter: (req, file, cb) => {
-    // Basic file type validation (allow common document types)
-    const allowedTypes = ['.pdf', '.docx', '.pptx', '.txt']
-    const ext = path.extname(file.originalname).toLowerCase()
-    if (allowedTypes.includes(ext)) {
+    console.log(file)
+    const allowedFiles = ['pptx', 'pdf', 'docx', 'txt']
+    if (allowedFiles.includes(file.mimetype.split('/')[1])) {
       cb(null, true)
     } else {
-      cb(new Error('Invalid file type. Only PDF, DOCX, PPTX, TXT allowed.'))
+      cb(null, false)
     }
   },
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB file size limit
-  },
-})
+}).single('file')
 
 // --- API Endpoints ---
+
+app.get('/z', (req: Request, res: Response) =>
+  res.status(200).send({ status: 'ok' })
+)
 
 /**
  * @swagger
@@ -94,8 +95,16 @@ const upload = multer({
 app.post('/ask', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const validatedBody = SimpleChatRequestSchema.parse(req.body)
-    const aiResponseStream = ask_ai_stream(validatedBody.input)
-    res.json({ response: aiResponseStream })
+
+    res.setHeader('Content-Type', 'text/plain') // Set header for streaming
+    res.setHeader('Transfer-Encoding', 'chunked')
+
+    const stream = ask_ai_stream(validatedBody.question, '')
+
+    for await (const chunk of stream) {
+      res.write(chunk) // Stream chunks to the client
+    }
+    res.end() // End the stream
   } catch (error) {
     next(error) // Pass error to the error handler
   }
@@ -228,7 +237,7 @@ app.post('/rag', async (req: Request, res: Response, next: NextFunction) => {
  */
 app.post(
   '/add-document',
-  upload.single('document'),
+  upload,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.file) {
@@ -236,7 +245,8 @@ app.post(
         return // Explicitly return void
       }
 
-      const filePath = req.file.path
+      const filePath = tempWrite.sync(req.file.buffer, req.file.originalname)
+
       console.log(`File uploaded to: ${filePath}`)
 
       // Process the document using the function from rag.ts
@@ -248,7 +258,7 @@ app.post(
 
       res.json({
         message: 'Document processed successfully.',
-        filename: req.file!.filename, // Use non-null assertion as we checked req.file
+        filename: req.file.originalname, // Use non-null assertion as we checked req.file
       })
     } catch (error) {
       // Clean up uploaded file on error if it exists

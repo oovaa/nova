@@ -60,6 +60,88 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## API Endpoints
+
+This project exposes the following API endpoints:
+
+### `POST /ask`
+
+Interact with the simple AI chat chain.
+
+**Request Body:**
+
+```json
+{
+  "input": "Your message to the AI"
+}
+```
+
+- `input` (string, required): The user's message.
+
+**Response (Success - 200):**
+
+```json
+{
+  "response": "AI's streamed response"
+}
+```
+
+**Responses (Error):**
+
+- `400 Bad Request`: If the `input` is missing or invalid.
+- `500 Internal Server Error`: For general server issues.
+
+### `POST /rag`
+
+Interact with the Retrieval-Augmented Generation (RAG) chat chain. This requires documents to be added first via `/add-document`.
+
+**Request Body:**
+
+```json
+{
+  "question": "Your question about the documents",
+  "history": "Optional conversation history"
+}
+```
+
+- `question` (string, required): The user's question.
+- `history` (string, optional): Previous conversation context.
+
+**Response (Success - 200):**
+
+- `Content-Type: text/plain`
+- The response body is a stream of text chunks representing the AI's answer based on the provided documents and history.
+
+**Responses (Error):**
+
+- `400 Bad Request`: If the `question` is missing/invalid, or if the RAG system hasn't been initialized (no documents added via `/add-document`).
+- `500 Internal Server Error`: For general server issues.
+
+### `POST /add-document`
+
+Upload a document to be processed and added to the RAG vector store.
+
+**Request Body:**
+
+- `Content-Type: multipart/form-data`
+- A form field named `file` containing the document to upload.
+- **Allowed file types:** PDF, DOCX, PPTX, TXT.
+- **Maximum file size:** 10MB (configurable in `server.ts`).
+
+**Response (Success - 200):**
+
+```json
+{
+  "message": "Document processed successfully.",
+  "filename": "original_filename.ext"
+}
+```
+
+**Responses (Error):**
+
+- `400 Bad Request`: If no file is uploaded, the file type is invalid, or the file exceeds the size limit.
+- `500 Internal Server Error`: If there's an error during file processing.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/ea8bb02b-68b8-43b7-86ad-ed8082c593ba) and click on Share -> Publish.
