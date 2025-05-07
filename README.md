@@ -64,31 +64,40 @@ This project is built with:
 
 This project exposes the following API endpoints:
 
-### `POST /ask`
+### `GET /z`
 
-Interact with the simple AI chat chain.
-
-**Request Body:**
-
-```json
-{
-  "input": "Your message to the AI"
-}
-```
-
-- `input` (string, required): The user's message.
+A simple health check endpoint.
 
 **Response (Success - 200):**
 
 ```json
 {
-  "response": "AI's streamed response"
+  "status": "ok"
 }
 ```
 
+### `POST /ask`
+
+Interact with the simple AI chat chain. This endpoint streams the response.
+
+**Request Body:**
+
+```json
+{
+  "question": "Your message to the AI"
+}
+```
+
+- `question` (string, required): The user's message.
+
+**Response (Success - 200):**
+
+- `Content-Type: text/plain`
+- The response body is a stream of text chunks representing the AI's answer.
+
 **Responses (Error):**
 
-- `400 Bad Request`: If the `input` is missing or invalid.
+- `400 Bad Request`: If the `question` is missing or invalid.
 - `500 Internal Server Error`: For general server issues.
 
 ### `POST /rag`
