@@ -112,7 +112,10 @@ app.post('/ask', async (req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Transfer-Encoding', 'chunked')
 
     const stream = ask_ai_stream(validatedBody.question, '')
-    res.send(stream)
+    for await (const chunk of stream) {
+      res.write(chunk) // Write each string chunk to the response
+    }
+    res.end()
   } catch (error) {
     next(error) // Pass error to the error handler
   }
