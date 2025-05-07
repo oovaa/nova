@@ -107,17 +107,27 @@ app.get('/z', (req: Request, res: Response) =>
 app.post('/ask', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const validatedBody = SimpleChatRequestSchema.parse(req.body)
+    console.log(`[SERVER /ask] Validated question: ${validatedBody.question}`)
 
-    res.setHeader('Content-Type', 'text/plain') // Set header for streaming
+    res.setHeader('Content-Type', 'text/plain')
     res.setHeader('Transfer-Encoding', 'chunked')
 
     const stream = ask_ai_stream(validatedBody.question, '')
+    console.log(
+      '[SERVER /ask] Obtained stream from ask_ai_stream. Starting iteration...'
+    )
+
+    let chunkCounter = 0
     for await (const chunk of stream) {
-      res.write(chunk) // Write each string chunk to the response
+      chunkCounter++
+      console.log(`[SERVER /ask] Writing chunk ${chunkCounter}`)
+      res.write(chunk)
     }
+    console.log(`[SERVER /ask] Finished writing ${chunkCounter} chunks.`)
     res.end()
   } catch (error) {
-    next(error) // Pass error to the error handler
+    console.error('[SERVER /ask] Error in /ask route:', error) // Log the error
+    next(error)
   }
 })
 

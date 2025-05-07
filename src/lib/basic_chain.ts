@@ -43,19 +43,36 @@ export async function* ask_ai_stream(
   input: string,
   chat_history: string
 ): AsyncGenerator<string> {
-  const stream = await streamingChain.stream({
-    input,
-    chat_history,
-  })
-
-  // Iterate over the LangChain stream (which yields objects like AIMessageChunk)
-  // and yield the string content of each chunk.
-  for await (const chunk of stream) {
-    // Assuming the chunk object has a 'content' property that is a string.
-    // Adjust 'chunk.content' if the actual property name is different (e.g., chunk.text, etc.)
-    // You might also need to check the type of the chunk if it can vary.
-    if (typeof chunk.content === 'string') {
-      yield chunk.content
+  try {
+    console.log(`[ask_ai_stream] Received input: ${input}`)
+    const stream = await streamingChain.stream({
+      input,
+      chat_history,
+    })
+    console.log('[ask_ai_stream] Got stream from streamingChain. Iterating...')
+    let chunkCounter = 0
+    for await (const chunk of stream) {
+      chunkCounter++
+      // Ensure chunk and chunk.content are what we expect
+      // console.log(`[ask_ai_stream] Raw chunk ${chunkCounter}:`, chunk);
+      if (chunk && typeof chunk.content === 'string') {
+        console.log(
+          `[ask_ai_stream] Yielding content of chunk ${chunkCounter}: '${chunk.content}'`
+        )
+        yield chunk.content
+      } else {
+        console.log(
+          `[ask_ai_stream] Chunk ${chunkCounter} content is not a string or chunk is invalid:`,
+          chunk
+        )
+        // Optionally, yield an empty string or a placeholder if appropriate,
+        // or simply skip if chunks without string content are possible and ignorable.
+        // For now, we'll just log and skip.
+      }
     }
+    console.log(`[ask_ai_stream] Finished yielding ${chunkCounter} chunks.`)
+  } catch (error) {
+    console.error('[ask_ai_stream] Error:', error)
+    throw error // Re-throw to be caught by the route handler
   }
 }
