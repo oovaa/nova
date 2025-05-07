@@ -4,6 +4,7 @@ import { PromptTemplate } from '@langchain/core/prompts'
 import { StringOutputParser } from '@langchain/core/output_parsers'
 import { RunnableSequence } from '@langchain/core/runnables'
 import dotenv from 'dotenv'
+import { stdout } from 'process'
 
 dotenv.config() // Load environment variables from .env file
 

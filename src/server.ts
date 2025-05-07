@@ -15,6 +15,18 @@ const port = process.env.PORT || 3001 // Use environment variable or default
 app.use(cors()) // Enable CORS for all origins
 app.use(express.json()) // Parse JSON bodies
 
+// Logger Middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const { body } = req
+
+  console.log(
+    `[${new Date().toISOString()}] ${req.method} ${
+      req.url
+    } body - ${JSON.stringify(body, null, 2)}`
+  )
+  next()
+})
+
 // --- Zod Schemas for Validation ---
 
 const SimpleChatRequestSchema = z.object({
@@ -100,11 +112,7 @@ app.post('/ask', async (req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Transfer-Encoding', 'chunked')
 
     const stream = ask_ai_stream(validatedBody.question, '')
-
-    for await (const chunk of stream) {
-      res.write(chunk) // Stream chunks to the client
-    }
-    res.end() // End the stream
+    res.send(stream)
   } catch (error) {
     next(error) // Pass error to the error handler
   }

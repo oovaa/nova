@@ -11,10 +11,14 @@
     "start": "bun run src/server.ts"
   },
   "dependencies": {
+    "@aws-sdk/credential-provider-env": "^3.804.0",
+    "@aws-sdk/credential-provider-http": "^3.804.0",
+    "@aws-sdk/credential-provider-ini": "^3.804.0",
+    "@aws-sdk/credential-provider-node": "^3.804.0",
     "@langchain/cohere": "^0.3.3",
     "@langchain/community": "^0.3.42",
-    "@langchain/core": "^0.3.46",
-    "@types/bun": "^1.2.10",
+    "@langchain/core": "^0.3.54",
+    "@types/bun": "^1.2.12",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
@@ -23,16 +27,16 @@
     "officeparser": "^5.1.1",
     "pdf-parse": "^1.1.1",
     "temp-write": "^6.0.0",
-    "zod": "^3.24.3"
+    "zod": "^3.24.4"
   },
   "devDependencies": {
-    "@eslint/js": "^9.9.0",
+    "@eslint/js": "^9.26.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
     "@types/multer": "^1.4.12",
-    "@types/node": "^22.5.5",
-    "eslint": "^9.9.0",
-    "typescript": "^5.5.3",
-    "typescript-eslint": "^8.0.1"
+    "@types/node": "^22.15.14",
+    "eslint": "^9.26.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.32.0"
   }
 }
