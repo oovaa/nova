@@ -101,10 +101,7 @@ app.post('/ask', async (req: Request, res: Response, next: NextFunction) => {
 
     const stream = ask_ai_stream(validatedBody.question, '')
 
-    for await (const chunk of stream) {
-      res.write(chunk) // Stream chunks to the client
-    }
-    res.end() // End the stream
+    res.status(200).send({ res_stream: stream }) 
   } catch (error) {
     next(error) // Pass error to the error handler
   }
