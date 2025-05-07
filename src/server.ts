@@ -19,7 +19,7 @@ app.use(express.json()) // Parse JSON bodies
 app.use((req: Request, res: Response, next: NextFunction) => {
   const { body } = req
 
-  const now = new Date();
+  const now = new Date()
   console.log(
     `[${now.getHours()}:${now.getMinutes()}] ${req.method} ${
       req.url
@@ -110,8 +110,10 @@ app.post('/ask', async (req: Request, res: Response, next: NextFunction) => {
     const validatedBody = SimpleChatRequestSchema.parse(req.body)
     console.log(`[SERVER /ask] Validated question: ${validatedBody.question}`)
 
-    res.setHeader('Content-Type', 'text/plain')
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
     res.setHeader('Transfer-Encoding', 'chunked')
+    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Connection', 'keep-alive')
 
     const stream = ask_ai_stream(validatedBody.question, '')
     console.log(
