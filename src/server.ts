@@ -64,6 +64,7 @@ const upload = multer({
   },
 }).single('file')
 
+//@ts-ignore
 app.get('/z', (req: Request, res: Response) =>
   res.status(200).send({ status: 'ok', timestamp: new Date().toISOString() })
 )
@@ -73,17 +74,17 @@ app.post('/ask', async (req: Request, res: Response, next: NextFunction) => {
     const validatedBody = SimpleChatRequestSchema.parse(req.body)
     console.log(`[SERVER /ask] Validated question: "${validatedBody.question}"`)
 
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
-    res.setHeader('Transfer-Encoding', 'chunked')
-    res.setHeader('Cache-Control', 'no-cache')
-    res.setHeader('X-Accel-Buffering', 'no') // Often helps disable buffering in Nginx/proxies
+    // Set headers for Server-Sent Events (SSE)
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8')
+    res.setHeader('Cache-Control', 'no-cache, no-transform')
     res.setHeader('Connection', 'keep-alive')
+    res.setHeader('Content-Encoding', 'none') // As requested
+    res.setHeader('X-Accel-Buffering', 'no') // Important for proxies with SSE
 
-    // Send an initial small chunk (heartbeat) to potentially open the connection faster
-    // and prevent proxy buffering or timeouts on idle connections.
-    res.write(' ') // A single space or a more structured ping like ":ping\n\n"
+    // Optional: Send an initial SSE comment as a ping or to open the connection.
+    // res.write(': connection established\n\n');
 
-    const stream = ask_ai_stream(validatedBody.question, '') // Assuming history is handled or not needed here as per original
+    const stream = ask_ai_stream(validatedBody.question, '') // Assuming history is empty or handled by ask_ai_stream
     console.log(
       '[SERVER /ask] Obtained stream from ask_ai_stream. Starting iteration...'
     )
@@ -92,19 +93,30 @@ app.post('/ask', async (req: Request, res: Response, next: NextFunction) => {
       console.error(
         '[SERVER /ask] Stream is null or undefined after calling ask_ai_stream.'
       )
-      // Ensure headers are set for an error response if we haven't sent any body yet.
-      // However, we already sent a heartbeat. This scenario should ideally not happen if ask_ai_stream is robust.
-      return res.status(500).end('Failed to initialize stream.') // Or handle more gracefully
+      // If stream setup fails, and we haven't sent headers, we could send an error.
+      // However, with SSE, headers are sent first. Client will see a prematurely closed stream.
+      // For robustness, ensure ask_ai_stream itself handles internal errors gracefully
+      // or throws an error before this point if it cannot produce a stream.
+      // Ending the response here if stream is null.
+      return res.end() // Or res.status(500).end() if no headers were possibly sent.
+      // But with SSE, headers are already on their way.
     }
 
     let chunkCounter = 0
     for await (const chunk of stream) {
       chunkCounter++
-      // console.log(`[SERVER /ask] Writing chunk ${chunkCounter}: "${chunk}"`) // Can be very verbose
-      if (chunk && chunk.length > 0) {
-        res.write(chunk)
-      } else {
-        // console.log(`[SERVER /ask] Received empty or null chunk ${chunkCounter}. Skipping write.`);
+      if (chunk && typeof chunk === 'string' && chunk.length > 0) {
+        // Format chunk for SSE:
+        // Each line of the chunk data should be prefixed with "data: "
+        // and the message must end with a double newline "\n\n"
+        const sseFormattedChunk = `data: ${chunk.replace(
+          /\n/g,
+          '\ndata: '
+        )}\n\n`
+        // console.log(`[SERVER /ask] Writing SSE chunk ${chunkCounter}: "${sseFormattedChunk}"`) // Verbose
+        res.write(sseFormattedChunk)
+      } else if (chunk) {
+        // console.log(`[SERVER /ask] Received non-string or empty chunk ${chunkCounter}. Skipping write.`);
       }
     }
     console.log(

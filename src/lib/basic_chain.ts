@@ -11,7 +11,6 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-
 export const llm = new ChatCohere({
   apiKey: process.env.VITE_COHERE_API_KEY,
   model: 'command-r-plus',
@@ -116,32 +115,32 @@ export async function* ask_ai_stream(
 
 // // Example usage in a main function
 // async function main() {
-//   const input = "Hello Nova, how are you today?";
-//   console.log("[main] Sending input to ask_ai:", input);
+//   const input = 'Hello Nova, how are you today?'
+//   console.log('[main] Sending input to ask_ai:', input)
 
 //   // Non-streaming example
 //   try {
-//     const response = await ask_ai(input);
-//     console.log("[main] Non-streaming response:", response);
+//     const response = await ask_ai(input)
+//     console.log('[main] Non-streaming response:', response)
 //   } catch (error) {
-//     console.error("[main] Error in non-streaming example:", error);
+//     console.error('[main] Error in non-streaming example:', error)
 //   }
 
 //   // Streaming example
-//   console.log("[main] Starting streaming example...");
-//   const chatHistory = ""; // Initialize with empty or previous chat history
+//   console.log('[main] Starting streaming example...')
+//   const chatHistory = '' // Initialize with empty or previous chat history
 //   try {
-//     const stream = ask_ai_stream(input, chatHistory);
+//     const stream = ask_ai_stream(input, chatHistory)
 //     for await (const chunk of stream) {
-//       process.stdout.write(chunk); // Print chunks as they arrive
+//       process.stdout.write(chunk) // Print chunks as they arrive
 //     }
-//     console.log("\n[main] Streaming example completed.");
+//     console.log('\n[main] Streaming example completed.')
 //   } catch (error) {
-//     console.error("[main] Error in streaming example:", error);
+//     console.error('[main] Error in streaming example:', error)
 //   }
 // }
 
 // // Run the main function
 // main().catch((error) => {
-//   console.error("[main] Unhandled error:", error);
-// });
+//   console.error('[main] Unhandled error:', error)
+// })
