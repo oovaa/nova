@@ -83,6 +83,7 @@ const ChatContainer = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Accept: 'text/plain', // Specify that the client accepts plain text
         },
         body: body,
       })
@@ -112,11 +113,12 @@ const ChatContainer = () => {
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === botMessageId
-                ? { ...msg, content: fullResponse, isLoading: false }
+                ? { ...msg, content: fullResponse, isLoading: true } // Keep isLoading true while streaming
                 : msg
             )
           )
         }
+        // After the loop, when the stream is done, set isLoading to false for the message
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === botMessageId ? { ...msg, isLoading: false } : msg
