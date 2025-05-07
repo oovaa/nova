@@ -19,8 +19,9 @@ app.use(express.json()) // Parse JSON bodies
 app.use((req: Request, res: Response, next: NextFunction) => {
   const { body } = req
 
+  const now = new Date();
   console.log(
-    `[${new Date().toISOString()}] ${req.method} ${
+    `[${now.getHours()}:${now.getMinutes()}] ${req.method} ${
       req.url
     } body - ${JSON.stringify(body, null, 2)}`
   )
