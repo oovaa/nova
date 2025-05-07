@@ -1,4 +1,3 @@
-
 import ChatContainer from "@/components/Chat/ChatContainer";
 
 const Index = () => {
