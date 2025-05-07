@@ -9,7 +9,8 @@ import { Loader2, FilePlus } from 'lucide-react'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Button } from '@/components/ui/button'
 
-const API_BASE_URL = 'https://nova-8x6l.onrender.com'
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'https://nova-8x6l.onrender.com'
 
 interface Message extends ChatMessageProps {
   id: string
@@ -71,19 +72,19 @@ const ChatContainer = () => {
     setStreamingMessageId(botMessageId)
 
     try {
-      let response: Response
       const endpoint = isRagActive
         ? `${API_BASE_URL}/rag`
         : `${API_BASE_URL}/ask`
+
       const body = isRagActive
         ? JSON.stringify({ question: content, history: getHistory() })
         : JSON.stringify({ question: content })
 
-      response = await fetch(endpoint, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'text/plain', // Specify that the client accepts plain text
+          Accept: isRagActive ? 'text/plain' : 'text/event-stream',
         },
         body: body,
       })
@@ -103,31 +104,89 @@ const ChatContainer = () => {
       if (response.body) {
         const reader = response.body.getReader()
         const decoder = new TextDecoder()
-        let fullResponse = ''
 
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          const chunk = decoder.decode(value, { stream: true })
-          fullResponse += chunk
+        if (!isRagActive) {
+          // SSE processing for /ask endpoint
+          let buffer = ''
+          let accumulatedContent = '' // Stores the full processed, displayable content for the current bot message
+
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+
+            buffer += decoder.decode(value, { stream: true })
+            let eolIndex // End of an SSE message (\n\n)
+
+            // Process all complete SSE messages in the buffer
+            while ((eolIndex = buffer.indexOf('\n\n')) >= 0) {
+              const sseMessagePayload = buffer.slice(0, eolIndex) // Data for one SSE event
+              buffer = buffer.slice(eolIndex + 2) // Consume the message and its trailing \n\n
+              const lines = sseMessagePayload.split('\n')
+              const dataParts: string[] = []
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  dataParts.push(line.substring('data: '.length))
+                } else if (line.startsWith('data:')) {
+                  // Handles "data:" (empty data line) or "data:actualdata"
+                  dataParts.push(line.substring('data:'.length))
+                }
+                // Other SSE lines like 'event:', 'id:', 'retry:', or comments (':') are ignored here.
+              }
+
+              // Only proceed if the current SSE event actually contained data lines.
+              if (dataParts.length > 0) {
+                const currentEventData = dataParts.join('\n') // Standard way to reconstruct SSE data field
+                accumulatedContent += currentEventData // Append data from THIS event to the total for this response
+
+                // Update the UI incrementally with the latest accumulated displayable content
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === botMessageId
+                      ? { ...msg, content: accumulatedContent, isLoading: true } // Update content, keep isLoading true
+                      : msg
+                  )
+                )
+              }
+            }
+          }
+          // Final update for the message when stream is done, setting isLoading to false
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === botMessageId
-                ? { ...msg, content: fullResponse, isLoading: true } // Keep isLoading true while streaming
+                ? { ...msg, content: accumulatedContent, isLoading: false } // Use final accumulatedContent
+                : msg
+            )
+          )
+        } else {
+          // Existing plain text stream processing for /rag endpoint
+          let fullResponse = ''
+
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+
+            const chunk = decoder.decode(value, { stream: true })
+            fullResponse += chunk
+
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === botMessageId
+                  ? { ...msg, content: fullResponse, isLoading: true }
+                  : msg
+              )
+            )
+          }
+
+          // Final update when stream is complete
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === botMessageId
+                ? { ...msg, content: fullResponse, isLoading: false }
                 : msg
             )
           )
         }
-        // After the loop, when the stream is done, set isLoading to false for the message
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === botMessageId ? { ...msg, isLoading: false } : msg
-          )
-        )
-      } else {
-        throw new Error('Response body is missing')
       }
-
       setError(null)
     } catch (err: any) {
       console.error('Failed to get bot response', err)

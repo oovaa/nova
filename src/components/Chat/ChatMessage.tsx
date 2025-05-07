@@ -7,14 +7,12 @@ export interface ChatMessageProps {
   content: string
   isUser: boolean
   isError?: boolean
-  isLoading?: boolean
 }
 
 const ChatMessage = ({
   content,
   isUser,
   isError,
-  isLoading,
 }: ChatMessageProps) => {
   const messageRef = useRef<HTMLDivElement>(null)
 
@@ -35,17 +33,10 @@ const ChatMessage = ({
         isError && 'bg-destructive text-destructive-foreground'
       )}
     >
-      {isLoading ? (
-        <div className='typing-indicator'>
-          <span className='bg-foreground/50 dark:bg-foreground/70'></span>
-          <span className='bg-foreground/50 dark:bg-foreground/70'></span>
-          <span className='bg-foreground/50 dark:bg-foreground/70'></span>
-        </div>
-      ) : (
-        <div className='break-words whitespace-pre-wrap'>
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-        </div>
-      )}
+      {/* Removed typing indicator logic. Always render content. */}
+      <div className='break-words whitespace-pre-wrap'>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      </div>
     </div>
   )
 }
