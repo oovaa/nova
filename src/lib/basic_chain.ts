@@ -48,5 +48,14 @@ export async function* ask_ai_stream(
     chat_history,
   })
 
-  return stream
+  // Iterate over the LangChain stream (which yields objects like AIMessageChunk)
+  // and yield the string content of each chunk.
+  for await (const chunk of stream) {
+    // Assuming the chunk object has a 'content' property that is a string.
+    // Adjust 'chunk.content' if the actual property name is different (e.g., chunk.text, etc.)
+    // You might also need to check the type of the chunk if it can vary.
+    if (typeof chunk.content === 'string') {
+      yield chunk.content
+    }
+  }
 }
