@@ -30,11 +30,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 const SimpleChatRequestSchema = z.object({
   question: z.string().min(1, 'Input cannot be empty'),
+  history: z.string(),
 })
 
 const RagChatRequestSchema = z.object({
   question: z.string().min(1, 'Question cannot be empty'),
-  history: z.string().optional(),
+  history: z.string(),
 })
 
 const storage = multer.memoryStorage()
@@ -84,7 +85,7 @@ app.post('/ask', async (req: Request, res: Response, next: NextFunction) => {
     // Optional: Send an initial SSE comment as a ping or to open the connection.
     // res.write(': connection established\n\n');
 
-    const stream = ask_ai_stream(validatedBody.question, '') // Assuming history is empty or handled by ask_ai_stream
+    const stream = ask_ai_stream(validatedBody.question, validatedBody.history) // Assuming history is empty or handled by ask_ai_stream
     console.log(
       '[SERVER /ask] Obtained stream from ask_ai_stream. Starting iteration...'
     )
